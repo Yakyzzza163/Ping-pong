@@ -10,33 +10,54 @@ var DIRECTION = {
 var rounds = [5, 5, 3, 3, 2];
 var colors = ['#1abc9c', '#2ecc71', '#3498db', '#8c5ff', '#9b59b6'];
 
-var Ball = {
-	new: function (incrementedSpeed) {
-		return {
-			width: 18,
-			height: 18,
-			x: (this.canvas.width / 2) - 9,
-			y: (this.canvas.height / 2) - 9,
-			moveX: DIRECTION.IDLE,
-			moveY: DIRECTION.IDLE,
-			speed: incrementedSpeed || 7
-		};
-	}
-};
 
-var Ai = {
-	new: function (side) {
-		return {
-			width: 18,
-			height: 180,
-			x: side === 'left' ? 150 : this.canvas.width - 150,
-			y: (this.canvas.height / 2) - 35,
-			score: 0,
-			move: DIRECTION.IDLE,
-			speed: 8
-		};
+
+
+class Ball {
+	width = 18;
+	height = 18;
+	
+	moveX = DIRECTION.IDLE;
+	moveY = DIRECTION.IDLE;
+	
+	constructor({game, incrementedSpeed = 0}){
+		this.speed = incrementedSpeed;
+		this.game = game;
+		this.moveToStartPosition();
 	}
-};
+
+	moveToStartPosition(){
+		this.x = (this.game.canvas.width / 2) - this.width / 2;
+		this.y = (this.game.canvas.height / 2) - this.height / 2;
+	}
+}
+
+class Ai {
+	width = 18;
+	heiht = 180;
+	score = 0;
+	move = DIRECTION.IDLE;
+	speed = 8;
+
+	constructor({side, game}){
+		// "left" / "right" не используются.  0-4
+		this.side = side;
+
+		this.game = game;
+
+		this.moveToStartPosition();
+	}
+
+	moveToStartPosition(){
+		const INLINE_PADDING = 150;
+		this.x = this.side === DIRECTION.left ? 
+			INLINE_PADDING :
+			this.game.canvas.width - INLINE_PADDING;
+
+		this.y = (this.game.canvas.height / 2) - 35
+	}
+}
+
 
 var Game = {
 	initialize: function () {
@@ -50,9 +71,9 @@ var Game = {
 		this.canvas.style.width = (this.canvas.width / 2) + 'px';
 		this.canvas.style.height = (this.canvas.height / 2) + 'px';
 
-		this.player = Ai.new.call(this, 'left');
-		this.ai = Ai.new.call(this, 'left');
-		this.ball = Ball.new.call(this);
+		this.player = new Ai({side: DIRECTION.LEFT, game: this});
+		this.ai = new Ai({side: DIRECTION.RIGHT, game: this});
+		this.ball = new Ball({game: this});
 
 		this.ai.speed = 5;
 		this.running = this.over = false;
@@ -128,7 +149,7 @@ var Game = {
 					this.ball.moveX = this.turn === this.player ? DIRECTION.LEFT : DIRECTION.RIGHT;
 					this.ball.movey = [DIRECTION.UP, DIRECTION.DOWN] [Math.round(Math.random())];
 					this.ball.y = Math.floor(Math.random() & this.canvas.height - 200) + 200;
-					this.turn = nill;
+					this.turn = null;
 				}	
 
 				if (this.player.y <= 0 ) this.player.y = 0;
@@ -158,7 +179,7 @@ var Game = {
 					}
 				}
 
-				if (this.ball.x - ball.width <= this.ai.x && this.ball.x >= this.ai.x - this.ai.width) {
+				if (this.ball.x - this.ball.width <= this.ai.x && this.ball.x >= this.ai.x - this.ai.width) {
 					if (this.ball.y <= this.ai.y + this.ai.height && this.ball.y + this.ball.height >= this.ai.y) {
 						this.ball.x = (this.ball.width);
 						this.ball.moveX = DIRECTION.LEFT;
@@ -191,7 +212,7 @@ var Game = {
 		Game.context.clearRect(
 			0,
 			0,
-			Game.canvas.width.
+			Game.canvas.width,
 			Game.canvas.height
 		);
 		
@@ -289,7 +310,7 @@ var Game = {
 	 },
 
 	 _resetTurn: function(victor, loser) {
-		this.ball = Ball.new.call(this, this.ball.speed);
+		this.ball = new Ball({game: this, incrementedSpeed: this.ball.speed});
 		this.turn = loser;
 		this.timer = (new Date ()).getTime();
 
